@@ -33,7 +33,10 @@ class SerialDriver(ConsoleExpectMixin, Driver, ConsoleProtocol):
         if isinstance(self.port, SerialPort):
             self.serial = serial.Serial()
         else:
-            self.serial = serial.rfc2217.Serial()
+            self.serial = {
+                "rfc2217": serial.rfc2217.Serial(),
+                "raw": serial.serial_for_url("socket://", do_not_open=True),
+                }[self.port.protocol]  
         self.status = 0
 
     def on_activate(self):
@@ -41,7 +44,10 @@ class SerialDriver(ConsoleExpectMixin, Driver, ConsoleProtocol):
             self.serial.port = self.port.port
             self.serial.baudrate = self.port.speed
         else:
-            self.serial.port = "rfc2217://{}:{}/".format(self.port.host, self.port.port)
+            self.serial.port = {
+                "rfc2217": "rfc2217://{}:{}/",
+                "raw": "socket://{}:{}/",
+                }[self.port.protocol].format(self.port.host, self.port.port)
             self.serial.baudrate = self.port.speed
         self.open()
 
